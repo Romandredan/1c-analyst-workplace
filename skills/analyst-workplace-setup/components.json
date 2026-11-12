@@ -1,0 +1,607 @@
+{
+  "stages": {
+    "1": "Чат с пространствами: ничего не устанавливается",
+    "2": "Агентская среда: клиент агента, инструменты и навыки",
+    "3": "MCP и инструменты в контуре 1С"
+  },
+  "components": [
+    {
+      "id": "git",
+      "name": "Git for Windows",
+      "stage": 2,
+      "required": true,
+      "purpose": "История проекта и контрольные точки; агент видит изменения через diff",
+      "used_by": [
+        "вся работа в проекте",
+        "контрольные точки в истории проекта"
+      ],
+      "check": {
+        "type": "command",
+        "cmd": [
+          "git",
+          "--version"
+        ],
+        "min_version": "2.40"
+      },
+      "source": "https://git-scm.com/download/win",
+      "install": [
+        {
+          "method": "winget",
+          "command": "winget install --id Git.Git -e --source winget",
+          "admin": false
+        },
+        {
+          "method": "manual",
+          "command": "PortableGit с https://github.com/git-for-windows/git/releases: распаковать в %LOCALAPPDATA%\\Programs\\Git и добавить cmd в PATH пользователя",
+          "admin": false
+        }
+      ]
+    },
+    {
+      "id": "agent-client",
+      "name": "Клиент агента (ZCode) и модель",
+      "stage": 2,
+      "required": true,
+      "purpose": "Среда исполнения агента: читает проект, вызывает навыки, MCP и команды",
+      "used_by": [
+        "вся работа в проекте"
+      ],
+      "check": {
+        "type": "path",
+        "paths": [
+          "~/.zcode"
+        ]
+      },
+      "source": null,
+      "install": [
+        {
+          "method": "manual",
+          "command": "Установщик и подписка на модель по официальной инструкции клиента",
+          "admin": false
+        }
+      ],
+      "notes": "Вместо ZCode подойдёт другой клиент с поддержкой навыков и MCP; путь проверки меняется на папку его настроек"
+    },
+    {
+      "id": "python",
+      "name": "Python 3.11 или новее",
+      "stage": 2,
+      "required": true,
+      "purpose": "Скрипты навыков: проверка окружения, сборка пакета для заказчика",
+      "used_by": [
+        "analyst-workplace-setup",
+        "analyst-handoff"
+      ],
+      "check": {
+        "type": "command",
+        "cmd": [
+          "python",
+          "--version"
+        ],
+        "min_version": "3.11"
+      },
+      "source": "https://www.python.org/downloads/windows/",
+      "install": [
+        {
+          "method": "winget",
+          "command": "winget install --id Python.Python.3.12 -e --source winget",
+          "admin": false
+        },
+        {
+          "method": "manual",
+          "command": "Установщик с python.org, вариант «Install for current user» и флажок «Add python.exe to PATH»",
+          "admin": false
+        }
+      ]
+    },
+    {
+      "id": "node",
+      "name": "Node.js LTS и npm",
+      "stage": 2,
+      "required": true,
+      "purpose": "Среда для Mermaid CLI и отрисовки накидки в браузере",
+      "used_by": [
+        "mermaid-cli",
+        "md-design-prototype"
+      ],
+      "check": {
+        "type": "command",
+        "cmd": [
+          "node",
+          "--version"
+        ],
+        "min_version": "18.0"
+      },
+      "source": "https://nodejs.org/",
+      "install": [
+        {
+          "method": "winget",
+          "command": "winget install --id OpenJS.NodeJS.LTS -e --source winget",
+          "admin": false
+        },
+        {
+          "method": "manual",
+          "command": "ZIP-архив Windows x64 с https://nodejs.org/en/download: распаковать в %LOCALAPPDATA%\\Programs\\node и добавить в PATH пользователя",
+          "admin": false
+        }
+      ]
+    },
+    {
+      "id": "mermaid-cli",
+      "name": "Mermaid CLI (mmdc)",
+      "stage": 2,
+      "required": true,
+      "purpose": "Проверка и отрисовка диаграмм Mermaid в PNG; без него навык диаграмм не отдаст картинку",
+      "used_by": [
+        "creating-mermaid-diagrams",
+        "analyst-handoff: проход 2"
+      ],
+      "check": {
+        "type": "command",
+        "cmd": [
+          "mmdc",
+          "--version"
+        ],
+        "min_version": "12.0.0",
+        "smoke": "mermaid"
+      },
+      "source": "https://github.com/mermaid-js/mermaid-cli",
+      "install": [
+        {
+          "method": "npm",
+          "command": "npm install -g @mermaid-js/mermaid-cli@12.0.0",
+          "admin": false
+        },
+        {
+          "method": "npm",
+          "command": "Локально в проект: npm install --save-dev @mermaid-js/mermaid-cli@12.0.0, вызов через npx mmdc",
+          "admin": false
+        }
+      ],
+      "notes": "При первой установке скачивается headless Chrome; в Mermaid CLI 12 размер задаётся --size, не -w"
+    },
+    {
+      "id": "pandoc",
+      "name": "pandoc",
+      "stage": 2,
+      "required": false,
+      "purpose": "Сборка пакета на согласование в DOCX и HTML; без него собирается только HTML",
+      "used_by": [
+        "analyst-handoff: проход 4"
+      ],
+      "check": {
+        "type": "command",
+        "cmd": [
+          "pandoc",
+          "--version"
+        ],
+        "min_version": "3.0",
+        "paths": [
+          "%LOCALAPPDATA%/Programs/pandoc/pandoc.exe"
+        ]
+      },
+      "source": "https://github.com/jgm/pandoc/releases",
+      "install": [
+        {
+          "method": "winget",
+          "command": "winget install --id JohnMacFarlane.Pandoc -e",
+          "admin": false
+        },
+        {
+          "method": "release",
+          "command": "python scripts/install_release.py --repo jgm/pandoc --asset \"windows-x86_64\\.zip$\" --exe pandoc.exe --name pandoc",
+          "admin": false
+        }
+      ]
+    },
+    {
+      "id": "openspec",
+      "name": "OpenSpec CLI",
+      "stage": 2,
+      "required": true,
+      "purpose": "Спецификация изменения для разработчика и её строгая проверка",
+      "used_by": [
+        "openspec-propose",
+        "analyst-handoff: режим разработка"
+      ],
+      "check": {
+        "type": "command",
+        "cmd": [
+          "openspec",
+          "--version"
+        ],
+        "min_version": "1.16.0"
+      },
+      "source": "https://github.com/Fission-AI/OpenSpec",
+      "install": [
+        {
+          "method": "script",
+          "command": "PowerShell: $env:OPENSPEC_VERSION = \"v1.16.0\"; irm https://raw.githubusercontent.com/Fission-AI/OpenSpec/main/scripts/binary/install.ps1 | iex",
+          "admin": false
+        },
+        {
+          "method": "npm",
+          "command": "npm install -g @fission-ai/openspec@1.16.0",
+          "admin": false
+        }
+      ],
+      "notes": "После установки: openspec init --tools <клиент> в корне проекта (zcode, claude и другие); команда кладёт в проект навыки openspec-propose, openspec-apply-change и другие"
+    },
+    {
+      "id": "skill-requirements-elicitation-ru",
+      "name": "Навык requirements-elicitation-ru",
+      "stage": 2,
+      "required": true,
+      "purpose": "Разбор постановок и расшифровок встреч: факты, гипотезы, пробелы, вопросы к заказчику",
+      "used_by": [
+        "разбор встреч и постановок"
+      ],
+      "check": {
+        "type": "skill",
+        "names": [
+          "requirements-elicitation-ru"
+        ]
+      },
+      "source": "https://github.com/Romandredan/1c-analyst-workplace",
+      "install": [
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --repo Romandredan/1c-analyst-workplace --ref main --path skills/requirements-elicitation-ru --client <клиент>",
+          "admin": false
+        },
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --archive requirements-elicitation-ru.skill --client <клиент> (архив из раздела Releases)",
+          "admin": false
+        }
+      ],
+      "notes": "Оба способа равнозначны: из репозитория или из архива .skill раздела Releases"
+    },
+    {
+      "id": "skill-analyst-handoff",
+      "name": "Навык analyst-handoff",
+      "stage": 2,
+      "required": true,
+      "purpose": "Пакет на согласование заказчику (текст, диаграммы, экраны, DOCX и HTML) и пакет для разработчика",
+      "used_by": [
+        "пакет на согласование с заказчиком"
+      ],
+      "check": {
+        "type": "skill",
+        "names": [
+          "analyst-handoff"
+        ]
+      },
+      "source": "https://github.com/Romandredan/1c-analyst-workplace",
+      "install": [
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --repo Romandredan/1c-analyst-workplace --ref main --path skills/analyst-handoff --client <клиент>",
+          "admin": false
+        },
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --archive analyst-handoff.skill --client <клиент> (архив из раздела Releases)",
+          "admin": false
+        }
+      ],
+      "notes": "Оба способа равнозначны: из репозитория или из архива .skill раздела Releases"
+    },
+    {
+      "id": "skill-mermaid",
+      "name": "Навык mermaid-diagrams-ru",
+      "stage": 2,
+      "required": true,
+      "purpose": "Процедура построения диаграмм: синтаксис, проверка до экспорта, различение ошибок схемы и окружения",
+      "used_by": [
+        "analyst-handoff: проход 2"
+      ],
+      "check": {
+        "type": "skill",
+        "names": [
+          "mermaid-diagrams-ru",
+          "creating-mermaid-diagrams",
+          "mermaid-skill"
+        ]
+      },
+      "source": "https://github.com/Romandredan/1c-analyst-workplace",
+      "install": [
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --repo Romandredan/1c-analyst-workplace --ref main --path skills/mermaid-diagrams-ru --client <клиент>",
+          "admin": false
+        },
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --archive mermaid-diagrams-ru.skill --client <клиент> (архив из раздела Releases)",
+          "admin": false
+        }
+      ],
+      "notes": "Прежний источник Agents365-ai/creating-mermaid-diagrams удалён автором (проверено 2026-11-09); его локальные копии засчитываются, но не распространяются. Папка в skills-disabled не считается установленной"
+    },
+    {
+      "id": "skill-md-design",
+      "name": "Навыки накидки (md-design-prototype и исполнители отрисовки)",
+      "stage": 2,
+      "required": false,
+      "purpose": "Прототипы управляемых форм 1С в PNG для согласования экранов с заказчиком",
+      "used_by": [
+        "analyst-handoff: проход 3"
+      ],
+      "check": {
+        "type": "skill",
+        "names": [
+          "md-design-prototype"
+        ]
+      },
+      "source": "https://github.com/Romandredan/md-design-skills",
+      "install": [
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --repo Romandredan/md-design-skills --ref main --path skills/md-design-prototype --path skills/md-design-render-web --path skills/md-design-render-screen --client <клиент>",
+          "admin": false
+        },
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --archive md-design-prototype.skill --client <клиент> (архив из раздела Releases)",
+          "admin": false
+        }
+      ],
+      "requires": [
+        "platform-1c",
+        "node"
+      ],
+      "notes": "Нужна установленная платформа 1С"
+    },
+    {
+      "id": "skill-brainstorming",
+      "name": "Навык brainstorming",
+      "stage": 2,
+      "required": false,
+      "purpose": "Варианты решения и компромиссы до выбора",
+      "used_by": [
+        "выбор решения и запись ADR"
+      ],
+      "check": {
+        "type": "skill",
+        "names": [
+          "brainstorming"
+        ]
+      },
+      "source": "https://github.com/obra/superpowers",
+      "install": [
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --repo obra/superpowers --ref v7.0.2 --path skills/brainstorming --client <клиент>",
+          "admin": false
+        }
+      ],
+      "notes": "Лицензия MIT. В конце навык передаёт управление superpowers:writing-plans; для аналитика это шаг не нужен, работа заканчивается дизайном и ADR"
+    },
+    {
+      "id": "skill-grilling",
+      "name": "Навыки grilling и domain-modeling",
+      "stage": 2,
+      "required": false,
+      "purpose": "ADR (запись архитектурного решения) и прожарка решения вопросами к владельцу",
+      "used_by": [
+        "выбор решения и запись ADR"
+      ],
+      "check": {
+        "type": "skill",
+        "names": [
+          "grilling",
+          "domain-modeling"
+        ],
+        "all": true
+      },
+      "source": "https://github.com/mattpocock/skills",
+      "install": [
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --repo mattpocock/skills --ref v1.3.2 --path skills/productivity/grilling --path skills/engineering/domain-modeling --client <клиент>",
+          "admin": false
+        }
+      ],
+      "notes": "Лицензия MIT"
+    },
+    {
+      "id": "platform-1c",
+      "name": "Платформа 1С:Предприятие 8.3",
+      "stage": 3,
+      "required": false,
+      "purpose": "Рабочая или тестовая база, отрисовка прототипов форм, сборка и тесты",
+      "used_by": [
+        "md-design-prototype",
+        "v8-runner",
+        "сборка отчётов и обработок навыками cc-1c-skills"
+      ],
+      "check": {
+        "type": "path",
+        "paths": [
+          "C:/Program Files/1cv8",
+          "C:/Program Files (x86)/1cv8"
+        ]
+      },
+      "source": "https://releases.1c.ru",
+      "install": [
+        {
+          "method": "manual",
+          "command": "Дистрибутив по лицензии организации; агент платформу не скачивает",
+          "admin": true
+        }
+      ]
+    },
+    {
+      "id": "skill-cc1c-report",
+      "name": "Навыки cc-1c-skills для внешнего отчёта (ERF и СКД)",
+      "stage": 3,
+      "required": false,
+      "purpose": "Каркас внешнего отчёта, схема компоновки данных из JSON, сборка и проверка ERF, чтение метаданных выгрузки конфигурации",
+      "used_by": [
+        "сборка отчётов и обработок навыками cc-1c-skills"
+      ],
+      "check": {
+        "type": "skill",
+        "names": [
+          "erf-init",
+          "erf-build",
+          "erf-validate",
+          "epf-build",
+          "epf-validate",
+          "skd-compile",
+          "skd-edit",
+          "skd-info",
+          "skd-validate",
+          "meta-info"
+        ],
+        "all": true
+      },
+      "source": "https://github.com/Nikolay-Shirokov/cc-1c-skills",
+      "install": [
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --repo Nikolay-Shirokov/cc-1c-skills --path .claude/skills/erf-init --path .claude/skills/erf-build --path .claude/skills/erf-validate --path .claude/skills/epf-build --path .claude/skills/epf-validate --path .claude/skills/skd-compile --path .claude/skills/skd-edit --path .claude/skills/skd-info --path .claude/skills/skd-validate --path .claude/skills/meta-info --client <клиент>",
+          "admin": false
+        },
+        {
+          "method": "manual",
+          "command": "Claude Code: claude plugin marketplace add https://github.com/Nikolay-Shirokov/cc-1c-skills, затем claude plugin install 1c-skills@cc-1c-skills (ставит все навыки автора, а не выбранные 10)",
+          "admin": false
+        }
+      ],
+      "requires": [
+        "platform-1c"
+      ],
+      "notes": "Лицензия MIT (Nick Shirokov), копии в репозиторий рабочего места не кладутся: навыки ставятся из репозитория автора, ветка main, последняя актуальная версия. Навыки erf-build и erf-validate вызывают скрипты соседних epf-build и epf-validate, поэтому все десять папок ставятся в один каталог навыков. Скрипты запускаются как powershell.exe -NoProfile -File (Windows PowerShell 5.1); если политика запуска организации блокирует скрипты, обход не применять, сообщить службе ИБ. В SKILL.md путь к скриптам задан переменной CLAUDE_SKILL_DIR: для Claude Code проверено по структуре, для других клиентов пробу выполнить до использования. Платформа 1С 8.3.24 или новее; -FormatVersion в erf-init не выше версии платформы (8.3.27 даёт 2.20). Навыку meta-info нужна XML-выгрузка конфигурации; вместо неё подойдут code-index или odata1c. Собранный ERF открывается через Файл, Открыть. Каталог .v8-xsd проекта для skd-validate необязателен."
+    },
+    {
+      "id": "skill-cc1c-report-extra",
+      "name": "Навыки cc-1c-skills: выгрузка конфигурации, реестр баз, запуск, макеты",
+      "stage": 3,
+      "required": false,
+      "purpose": "Выгрузка конфигурации в XML для meta-info, реестр баз .v8-project.json, запуск 1С, пустой макет и макет табличного документа из JSON",
+      "used_by": [
+        "сборка отчётов и обработок навыками cc-1c-skills"
+      ],
+      "check": {
+        "type": "skill",
+        "names": [
+          "db-dump-xml",
+          "db-list",
+          "db-run",
+          "template-add",
+          "mxl-compile",
+          "mxl-validate",
+          "mxl-info"
+        ],
+        "all": true
+      },
+      "source": "https://github.com/Nikolay-Shirokov/cc-1c-skills",
+      "install": [
+        {
+          "method": "skill",
+          "command": "python scripts/install_skill.py --repo Nikolay-Shirokov/cc-1c-skills --path .claude/skills/db-dump-xml --path .claude/skills/db-list --path .claude/skills/db-run --path .claude/skills/template-add --path .claude/skills/mxl-compile --path .claude/skills/mxl-validate --path .claude/skills/mxl-info --client <клиент>",
+          "admin": false
+        }
+      ],
+      "requires": [
+        "skill-cc1c-report",
+        "platform-1c"
+      ],
+      "notes": "Тот же источник и лицензия, что у skill-cc1c-report: ветка main, последняя актуальная версия. db-dump-xml и db-run работают с базой и читают .v8-project.json: пароль в реестр и в отчёты не записывать, брать у владельца базы. Выгрузка конфигурации нужна только если нет code-index и odata1c. Для макета печатной формы сверх вывода СКД нужны template-add и mxl-*."
+    },
+    {
+      "id": "code-index",
+      "name": "code-index (bsl-indexer)",
+      "stage": 3,
+      "required": false,
+      "purpose": "Агент видит выгрузку конфигурации: объекты, реквизиты, код и вызовы",
+      "used_by": [
+        "проверка гипотез по коду конфигурации"
+      ],
+      "check": {
+        "type": "command",
+        "cmd": [
+          "bsl-indexer",
+          "--version"
+        ],
+        "min_version": "1.15.6",
+        "paths": [
+          "C:/tools/code-index/bsl-indexer.exe",
+          "%LOCALAPPDATA%/Programs/code-index/bsl-indexer.exe"
+        ]
+      },
+      "source": "https://github.com/Regsorm/code-index-mcp",
+      "install": [
+        {
+          "method": "release",
+          "command": "python scripts/install_release.py --repo Regsorm/code-index-mcp --asset \"bsl-indexer-windows-x64\\.zip$\" --exe bsl-indexer.exe --name code-index",
+          "admin": false
+        }
+      ],
+      "notes": "Затем daemon.toml с алиасом выгрузки и подключение MCP в клиенте; выгрузка конфигурации нужна отдельно"
+    },
+    {
+      "id": "odata1c",
+      "name": "Плагин odata1c (шлюз к данным 1С)",
+      "stage": 3,
+      "required": false,
+      "purpose": "Чтение данных базы через OData с заменой реквизитов токенами до модели; запись только с подтверждением",
+      "used_by": [
+        "проверка гипотез по данным базы"
+      ],
+      "check": {
+        "type": "manual"
+      },
+      "source": "https://github.com/Romandredan/odata1c-gate",
+      "install": [
+        {
+          "method": "script",
+          "command": "Claude Code: claude plugin marketplace add Romandredan/odata1c-gate, затем claude plugin install odata1c@odata1c-gate",
+          "admin": false
+        },
+        {
+          "method": "script",
+          "command": "Другой клиент: python -m pip install --user odata1c-gate==0.4.0, затем зарегистрировать MCP-сервер (команда odata1c mcp) в конфиге клиента",
+          "admin": false
+        }
+      ],
+      "notes": "База публикуется по OData на веб-сервере; подключение базы к шлюзу выполняет навык odata1c-setup, пароль вводит человек в своём терминале. Проверка ручная: шлюз отвечает только при опубликованной базе"
+    },
+    {
+      "id": "v8-runner",
+      "name": "v8-runner и YaXUnit",
+      "stage": 3,
+      "required": false,
+      "purpose": "Сборка и тесты кода, который аналитик отдаёт разработчику на ревью",
+      "used_by": [
+        "доработка кода на ревью разработчику"
+      ],
+      "check": {
+        "type": "command",
+        "cmd": [
+          "v8-runner",
+          "--version"
+        ],
+        "paths": [
+          "%LOCALAPPDATA%/Programs/v8-runner/v8-runner.exe"
+        ]
+      },
+      "source": "https://github.com/alkoleft/v8-runner-rust",
+      "install": [
+        {
+          "method": "release",
+          "command": "python scripts/install_release.py --repo alkoleft/v8-runner-rust --asset \"v8-runner-windows-x86_64\\.zip$\" --exe v8-runner.exe --name v8-runner",
+          "admin": false
+        },
+        {
+          "method": "script",
+          "command": "v8-runner tools download yaxunit --sources",
+          "admin": false
+        }
+      ],
+      "notes": "Сначала ставится бинарник из релиза GitHub, затем командой скачивается YaXUnit. Если v8-runner не найден сразу после установки, вызывай по полному пути %LOCALAPPDATA%/Programs/v8-runner/v8-runner.exe: PATH клиент увидит после перезапуска"
+    }
+  ]
+}
