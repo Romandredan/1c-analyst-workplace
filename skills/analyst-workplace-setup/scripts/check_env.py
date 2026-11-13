@@ -6,6 +6,8 @@
 Для каждого компонента ступени (и ниже) печатает: статус, найденную версию,
 назначение и что делать, если компонента нет. PATH перечитывается из реестра
 Windows, поэтому только что установленные программы видны без перезапуска.
+Статус «настроить» - компонент установлен, но требует пост-установки
+(переустановка не нужна).
 Код выхода: 0 - всё обязательное на месте, 1 - чего-то обязательного нет.
 """
 
@@ -17,6 +19,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -31,7 +34,7 @@ CLIENT_SKILL_DIRS = {
 }
 DEFAULT_SKILL_DIRS = [d for dirs in CLIENT_SKILL_DIRS.values() for d in dirs]
 VERSION_RE = re.compile(r"(\d+(?:\.\d+){1,3})")
-OK, OLD, MISSING, MANUAL = "есть", "старая версия", "нет", "проверить вручную"
+OK, OLD, MISSING, MANUAL, SETUP = "есть", "старая версия", "нет", "проверить вручную", "настроить"
 
 
 def refresh_path() -> None:
@@ -47,10 +50,28 @@ def refresh_path() -> None:
                 value, _ = winreg.QueryValueEx(handle, "Path")
         except OSError:
             continue
-        for item in os.path.expandvars(value).split(os.pathsep):
-            if item and item not in parts:
-                parts.append(item)
+            for item in os.path.expandvars(value).split(os.pathsep):
+                if item and item not in parts:
+                    parts.append(item)
     os.environ["PATH"] = os.pathsep.join(parts)
+
+
+def refresh_user_env(names: list[str]) -> None:
+    """Дописывает переменные окружения пользователя из реестра, если их нет в процессе."""
+    if os.name != "nt":
+        return
+    import winreg
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Environment") as handle:
+            for name in names:
+                if not os.environ.get(name):
+                    try:
+                        value, _ = winreg.QueryValueEx(handle, name)
+                    except OSError:
+                        continue
+                    os.environ[name] = value
+    except OSError:
+        pass
 
 
 def as_tuple(version: str) -> tuple[int, ...]:
@@ -78,6 +99,10 @@ def check_command(spec: dict) -> tuple[str, str]:
         smoke = mermaid_smoke(exe)
         if smoke:
             return MISSING, f"{version}, рендер не работает: {smoke}"
+    if spec.get("smoke") == "code_index":
+        smoke = code_index_smoke(exe)
+        if smoke:
+            return SETUP, f"{version}, {smoke}"
     return OK, version
 
 
@@ -90,6 +115,32 @@ def mermaid_smoke(exe: str) -> str:
                                 capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
         if result.returncode != 0 or not out.is_file() or out.stat().st_size == 0:
             return (result.stderr or result.stdout).strip()[:200] or "PNG не создан"
+    return ""
+
+
+def code_index_smoke(exe: str) -> str:
+    """Прогоняет цепочку code-index: CODE_INDEX_HOME, daemon.toml, демон, MCP-порт.
+
+    Бинарник сам по себе не рабочее состояние: возвращает текст проблемы
+    или пустую строку, когда вся цепочка отвечает.
+    """
+    if not os.environ.get("CODE_INDEX_HOME"):
+        return "не задан CODE_INDEX_HOME: setx CODE_INDEX_HOME \"%USERPROFILE%\\.code-index\" и перезапустить терминал"
+    home = Path(os.environ["CODE_INDEX_HOME"])
+    if not (home / "daemon.toml").is_file():
+        return f"нет daemon.toml в {home}"
+    try:
+        result = subprocess.run([exe, "daemon", "status"], capture_output=True, text=True,
+                                encoding="utf-8", errors="replace", timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return f"статус демона не получен: {error}"
+    if result.returncode != 0 or "ready" not in (result.stdout + result.stderr).lower():
+        return f"демон не готов: {(result.stderr or result.stdout).strip()[:120] or 'нет ready в ответе'}"
+    try:
+        with socket.create_connection(("127.0.0.1", 8011), timeout=3):
+            pass
+    except OSError:
+        return "порт 8011 не отвечает: MCP-транспорт serve не запущен (Start-Process, отсоединённо)"
     return ""
 
 
@@ -141,6 +192,7 @@ def main() -> int:
     args = parser.parse_args()
 
     refresh_path()
+    refresh_user_env(["CODE_INDEX_HOME"])
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     chosen = args.skills_dir or (CLIENT_SKILL_DIRS[args.client] if args.client else DEFAULT_SKILL_DIRS)
     skill_dirs = [Path(p).expanduser().resolve() for p in chosen]
@@ -159,6 +211,8 @@ def main() -> int:
         if status in (MISSING, OLD, MANUAL):
             first = comp["install"][0]
             action = f"{first['method']}: {first['command']}"
+        elif status == SETUP:
+            action = "пост-установка по SKILL.md: CODE_INDEX_HOME, daemon.toml, демон, serve, сквозная проба"
         rows.append((comp, status, detail, action))
 
     if args.markdown:
@@ -168,7 +222,7 @@ def main() -> int:
             print(f"| {comp['name']} | {comp['stage']} | {status} | {detail} | {comp['purpose']} | {action} |")
     else:
         for comp, status, detail, action in rows:
-            mark = {OK: "[+]", OLD: "[~]", MISSING: "[-]", MANUAL: "[?]"}[status]
+            mark = {OK: "[+]", OLD: "[~]", MISSING: "[-]", MANUAL: "[?]", SETUP: "[!]"}[status]
             need = "обязательный" if comp["required"] else "по необходимости"
             print(f"{mark} {comp['name']} ({need}, ступень {comp['stage']}): {status} {detail}".rstrip())
             if action:

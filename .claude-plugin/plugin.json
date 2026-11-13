@@ -1,11 +1,19 @@
 {
   "name": "1c-analyst-workplace",
   "description": "Рабочее место аналитика 1С для работы с ИИ-агентом: выявление требований, пакет на согласование заказчику со схемами и экранами, проверка и установка окружения.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "Roman Danilov"
   },
   "license": "MIT",
   "repository": "https://github.com/Romandredan/1c-analyst-workplace",
-  "keywords": ["1c", "1с", "analyst", "requirements", "handoff", "mermaid", "agent-skills"]
+  "keywords": [
+    "1c",
+    "1с",
+    "analyst",
+    "requirements",
+    "handoff",
+    "mermaid",
+    "agent-skills"
+  ]
 }

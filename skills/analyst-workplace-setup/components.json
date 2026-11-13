@@ -530,7 +530,8 @@
         "paths": [
           "C:/tools/code-index/bsl-indexer.exe",
           "%LOCALAPPDATA%/Programs/code-index/bsl-indexer.exe"
-        ]
+        ],
+        "smoke": "code_index"
       },
       "source": "https://github.com/Regsorm/code-index-mcp",
       "install": [
@@ -540,7 +541,7 @@
           "admin": false
         }
       ],
-      "notes": "Затем daemon.toml с алиасом выгрузки и подключение MCP в клиенте; выгрузка конфигурации нужна отдельно"
+      "notes": "Бинарник - не рабочее состояние: после установки обязательна пост-установка по разделу SKILL.md (CODE_INDEX_HOME, daemon.toml, демон, отсоединённый serve --transport http на порту 8011, регистрация MCP http://127.0.0.1:8011/mcp в клиенте, сквозная проба initialize + get_stats). Демон только индексирует; MCP отвечает отдельный процесс serve. Автозапуска нет: команды перезапуска - в отчёт установки. XML-выгрузка конфигурации нужна отдельно (db-dump-xml); файл .code-index/config.json проекта (bsl-indexer init -p) закоммитить"
     },
     {
       "id": "odata1c",
