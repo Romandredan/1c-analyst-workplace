@@ -106,6 +106,11 @@ python scripts/check_package.py dev deliverables/<case-id>/dev --change <change-
   разделах для заказчика; для разработки вызывает `openspec validate --strict`
   и сверяет трассировку с требованиями и задачами OpenSpec.
 
+Проверка и сборка отклоняют пустые локальные изображения. Для PNG также
+проверяются подпись, ненулевые размеры, границы и CRC блоков, наличие IDAT и
+IEND. Проверка использует стандартную библиотеку Python. Смысл схемы и
+читаемость на странице A4 проверяются просмотром готового документа.
+
 ## Пример
 
 [examples/vip](examples/vip) - полный путь на кейсе продажи VIP-клиентам с
@@ -133,7 +138,8 @@ analyst-handoff/
 ├── review-checklist.md    # проверки по проходам и режимам
 ├── scripts/
 │   ├── build_package.py   # сборка DOCX и HTML
-│   └── check_package.py   # проверка пакетов
+│   ├── check_package.py   # проверка пакетов
+│   └── image_validation.py # общая проверка локальных изображений
 ├── assets/package.css     # стиль HTML
 ├── examples/vip/          # пример полного пути (в архив навыка не входит)
 └── tests/test_skill.py    # проверка навыка и регрессия на примере (в архив не входит)
