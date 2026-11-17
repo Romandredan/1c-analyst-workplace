@@ -22,6 +22,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from image_validation import local_image_error
+
 SKILL_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_CSS = SKILL_DIR / "assets" / "package.css"
 IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
@@ -50,12 +52,14 @@ def read_package(pkg_dir: Path) -> tuple[Path, str, str, str]:
 
 
 def check_images(pkg_dir: Path, text: str) -> list[str]:
-    """Проверяет, что все картинки на месте и каждая заглушка D/S заполнена."""
-    missing = [p for p in IMAGE_RE.findall(text) if not p.startswith(("http://", "https://", "data:"))
-               and not (pkg_dir / p).is_file()]
-    if missing:
-        fail("нет файлов картинок: " + ", ".join(missing))
+    """Проверяет локальные картинки и заполненность заглушек D/S."""
     images = IMAGE_RE.findall(text)
+    for path in dict.fromkeys(images):
+        if path.startswith(("http://", "https://", "data:")):
+            continue
+        error = local_image_error(pkg_dir / path)
+        if error:
+            fail(f"{error}: {path}")
     unfilled = []
     for marker in dict.fromkeys(MARKER_RE.findall(text)):
         filled = any(Path(p).name.startswith((f"{marker}-", f"{marker}.")) for p in images)

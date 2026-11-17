@@ -19,6 +19,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from image_validation import local_image_error
+
 PROFILE_SECTIONS = {"краткий": {0, 2, 3, 7, 11}, "полный": {0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11}}
 CUSTOMER_LANGUAGE_SECTIONS = {0, 1, 2, 3, 4, 5, 6, 7, 10, 11}
 METADATA_RE = re.compile(r"\b(Документ|Справочник|РегистрСведений|РегистрНакопления|Перечисление|ПланОбмена)\.[A-Za-zА-Яа-яЁё_]+")
@@ -161,10 +163,14 @@ def check_customer(pkg: Path, report: Report) -> dict[str, str]:
         if names:
             report.warn(f"раздел {number} для заказчика содержит имена метаданных: {', '.join(names)}")
 
-    for path in IMAGE_RE.findall(text):
-        if not path.startswith(("http://", "https://", "data:")) and not (pkg / path).is_file():
-            report.error(f"нет файла картинки {path}")
-    images = [Path(p).name for p in IMAGE_RE.findall(text)]
+    images = []
+    for path in dict.fromkeys(IMAGE_RE.findall(text)):
+        if not path.startswith(("http://", "https://", "data:")):
+            error = local_image_error(pkg / path)
+            if error:
+                report.error(f"{error}: {path}")
+                continue
+        images.append(Path(path).name)
     for kind, number in (("D", 2), ("S", 3)):
         markers = [m for m in dict.fromkeys(MARKER_RE.findall(text)) if m.startswith(kind)]
         empty = [m for m in markers if not any(name.startswith(f"{m}-") or name.startswith(f"{m}.") for name in images)]
